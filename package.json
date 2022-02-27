@@ -9,7 +9,7 @@
     "name": "Embbnux Ji",
     "url": "https://github.com/embbnux"
   },
-  "license": "MIT",
+  "license": "GPL-3.0",
   "scripts": {
     "start": "node server.js"
   },
