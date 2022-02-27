@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
     socket.off('error', onError);
   };
   const onError = (e) => {
-    console.log('client error: ', e && e.message);
     connectedSocket = null;
     socket.off('message', onMessage);
     socket.off('disconnect', onDisconnect);
@@ -108,9 +107,18 @@ app.use('/', (req, res) => {
     socket: connectedSocket,
     responseId: requestId,
   });
-  socketResponse.once('response', function(statusCode, statusMessage, headers) {
+  const onRequestError = () => {
+    socketResponse.off('response', onResponse);
+    socketResponse.destroy();
+    res.status(502);
+    res.end('Request error');
+  };
+  const onResponse = (statusCode, statusMessage, headers) => {
+    socketRequest.off('requestError', onRequestError)
     res.writeHead(statusCode, statusMessage, headers);
-  });
+  };
+  socketResponse.once('requestError', onRequestError)
+  socketResponse.once('response', onResponse);
   socketResponse.pipe(res);
   const onSocketError = () => {
     res.end(500);

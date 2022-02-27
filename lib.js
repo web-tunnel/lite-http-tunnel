@@ -50,6 +50,7 @@ class SocketResponse extends Readable {
     const onResponse = (responseId, data) => {
       if (this._responseId === responseId) {
         this._socket.off('response', onResponse);
+        this._socket.off('request-error', onRequestError);
         this.emit('response', data.statusCode, data.statusMessage, data.headers);
       }
     }
@@ -88,11 +89,23 @@ class SocketResponse extends Readable {
       this._socket.off('response-pipe-end', onResponsePipeEnd);
       this.push(null);
     };
+    const onRequestError = (requestId, error) => {
+      if (requestId === this._responseId) {
+        this._socket.off('request-error', onRequestError);
+        this._socket.off('response', onResponse);
+        this._socket.off('response-pipe', onResponsePipe);
+        this._socket.off('response-pipes', onResponsePipes);
+        this._socket.off('response-pipe-error', onResponsePipeError);
+        this._socket.off('response-pipe-end', onResponsePipeEnd);
+        this.emit('requestError', error);
+      }
+    };
     this._socket.on('response', onResponse);
     this._socket.on('response-pipe', onResponsePipe);
     this._socket.on('response-pipes', onResponsePipes);
     this._socket.on('response-pipe-error', onResponsePipeError);
     this._socket.on('response-pipe-end', onResponsePipeEnd);
+    this._socket.on('request-error', onRequestError);
   }
 
   _read(size) {}
