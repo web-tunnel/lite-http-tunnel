@@ -1,0 +1,26 @@
+{
+  "name": "Lite HTTP Tunnel Server",
+  "description": "A lite http tunnel server to expose a local server behind a NAT or firewall to the internet",
+  "repository": "https://github.com/embbnux/lite-http-tunnel",
+  "keywords": ["node", "http-tunnel", "tunnel"],
+  "env": {
+    "NODE_ENV": {
+      "description": "NODE_ENV",
+      "value": "production"
+    },
+    "SECRET_KEY": {
+      "description": "A secret key for generating and verifying jwt token.",
+      "generator": "secret"
+    },
+    "VERIFY_TOKEN": {
+      "description": "A secret key for generating jwt token.",
+      "generator": "secret"
+    },
+    "JWT_GENERATOR_USERNAME": {
+      "description": "username to access JWT generator"
+    },
+    "JWT_GENERATOR_PASSWORD": {
+      "description": "password to access JWT generator, remove this env after you get jwt token"
+    }
+  }
+}
