@@ -13,11 +13,12 @@ const app = express();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer);
 
-let connectedSocket = null;
+let connectedSockets = {};
 
 io.use((socket, next) => {
-  if (connectedSocket) {
-    return next(new Error('Connected error'));
+  const connectHost = socket.handshake.headers.host;
+  if (connectedSockets[connectHost]) {
+    return next(new Error(`${connectHost} has a existing connection`));
   }
   if (!socket.handshake.auth || !socket.handshake.auth.token){
     next(new Error('Authentication error'));
@@ -34,8 +35,9 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('client connected');
-  connectedSocket = socket;
+  const connectHost = socket.handshake.headers.host;
+  connectedSockets[connectHost] = socket;
+  console.log(`client connected at ${connectHost}`);
   const onMessage = (message) => {
     if (message === 'ping') {
       socket.send('pong');
@@ -43,12 +45,12 @@ io.on('connection', (socket) => {
   }
   const onDisconnect = (reason) => {
     console.log('client disconnected: ', reason);
-    connectedSocket = null;
+    delete connectedSockets[connectHost];
     socket.off('message', onMessage);
     socket.off('error', onError);
   };
   const onError = (e) => {
-    connectedSocket = null;
+    delete connectedSockets[connectHost];
     socket.off('message', onMessage);
     socket.off('disconnect', onDisconnect);
   };
@@ -78,6 +80,7 @@ app.get('/tunnel_jwt_generator', (req, res) => {
 });
 
 app.use('/', (req, res) => {
+  const connectedSocket = connectedSockets[req.headers.host];
   if (!connectedSocket) {
     res.status(404);
     res.send('Not Found');
