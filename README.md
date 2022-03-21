@@ -57,6 +57,34 @@ Please replace your_local_server_port with your local HTTP server port, eg: `300
 
 After that you can access your local HTTP server by access `your_public_server_domain`.
 
+## Multiple Clients
+
+The server steams HTTP request to WebSocket connection which has same host value in request headers.
+
+So if you have multiple domains for the proxy server, you can have multiple clients.
+
+For example, you have `https://app1.test.com` and `https://app2.test.com` for this proxy server.
+
+In client 1:
+
+```
+$ lite-http-tunnel config server https://app1.test.com -p app1
+$ lite-http-tunnel start your_local_server_port -p app1
+```
+
+In client 2:
+
+```
+$ lite-http-tunnel config server https://app2.test.com -p app2
+$ lite-http-tunnel start your_local_server_port -p app2
+```
+
 ## Related
 
-A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https://medium.com/@embbnux/building-a-http-tunnel-with-websocket-and-node-js-98068b0225d3)
+A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https://medium.com/@embbnux/building-a-http-tunnel-with-websocket-and-node-js-98068b0225d3?source=friends_link&sk=985d90ec9f512928b34ed38b7ddcb378)
+
+## TODO
+
+- [ ] Add tests
+- [ ] Support multiple clients based on request path prefix
+- [ ] Support to stream WebSocket request
