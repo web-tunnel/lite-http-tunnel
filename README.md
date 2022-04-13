@@ -57,6 +57,12 @@ Please replace your_local_server_port with your local HTTP server port, eg: `300
 
 After that you can access your local HTTP server by access `your_public_server_domain`.
 
+Change origin
+
+```
+$ lite-http-tunnel start your_local_server_port -o localhost:5000
+```
+
 ## Multiple Clients
 
 The server steams HTTP request to WebSocket connection which has same host value in request headers.
