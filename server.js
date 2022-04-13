@@ -11,7 +11,10 @@ const { SocketRequest, SocketResponse } = require('./lib');
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = new Server(httpServer);
+const webTunnelPath = '/$web_tunnel';
+const io = new Server(httpServer, {
+  path: webTunnelPath,
+});
 
 let connectedSockets = {};
 
@@ -87,7 +90,7 @@ app.use('/', (req, res) => {
     return;
   }
   const requestId = uuidV4();
-  const socketRequest = new SocketRequest({
+  const proxyRequest = new SocketRequest({
     socket: connectedSocket,
     requestId,
     request: {
@@ -97,40 +100,94 @@ app.use('/', (req, res) => {
     },
   });
   const onReqError = (e) => {
-    socketRequest.destroy(new Error(e || 'Aborted'));
+    proxyRequest.destroy(new Error(e || 'Aborted'));
   }
   req.once('aborted', onReqError);
   req.once('error', onReqError);
-  req.pipe(socketRequest);
+  req.pipe(proxyRequest);
   req.once('finish', () => {
     req.off('aborted', onReqError);
     req.off('error', onReqError);
   });
-  const socketResponse = new SocketResponse({
+  const proxyResponse = new SocketResponse({
     socket: connectedSocket,
     responseId: requestId,
   });
   const onRequestError = () => {
-    socketResponse.off('response', onResponse);
-    socketResponse.destroy();
+    proxyResponse.off('response', onResponse);
+    proxyResponse.destroy();
     res.status(502);
     res.end('Request error');
   };
-  const onResponse = (statusCode, statusMessage, headers) => {
-    socketRequest.off('requestError', onRequestError)
+  const onResponse = ({ statusCode, statusMessage, headers }) => {
+    proxyRequest.off('requestError', onRequestError)
     res.writeHead(statusCode, statusMessage, headers);
   };
-  socketResponse.once('requestError', onRequestError)
-  socketResponse.once('response', onResponse);
-  socketResponse.pipe(res);
+  proxyResponse.once('requestError', onRequestError)
+  proxyResponse.once('response', onResponse);
+  proxyResponse.pipe(res);
   const onSocketError = () => {
     res.end(500);
   };
-  socketResponse.once('error', onSocketError);
+  proxyResponse.once('error', onSocketError);
   connectedSocket.once('close', onSocketError)
   res.once('close', () => {
     connectedSocket.off('close', onSocketError);
-    socketResponse.off('error', onSocketError);
+    proxyResponse.off('error', onSocketError);
+  });
+});
+
+function createSocketHttpHeader(line, headers) {
+  return Object.keys(headers).reduce(function (head, key) {
+    var value = headers[key];
+
+    if (!Array.isArray(value)) {
+      head.push(key + ': ' + value);
+      return head;
+    }
+
+    for (var i = 0; i < value.length; i++) {
+      head.push(key + ': ' + value[i]);
+    }
+    return head;
+  }, [line])
+  .join('\r\n') + '\r\n\r\n';
+}
+
+httpServer.on('upgrade', (req, socket, head) => {
+  if (req.url.indexOf(webTunnelPath) === 0) {
+    return;
+  }
+  // proxy websocket request
+  const connectedSocket = connectedSockets[req.headers.host];
+  if (!connectedSocket) {
+    return;
+  }
+  if (head && head.length) socket.unshift(head);
+  const requestId = uuidV4();
+  const proxyRequest = new SocketRequest({
+    socket: connectedSocket,
+    requestId,
+    request: {
+      method: req.method,
+      headers: { ...req.headers },
+      path: req.url,
+    },
+  });
+  req.pipe(proxyRequest);
+  const proxyResponse = new SocketResponse({
+    socket: connectedSocket,
+    responseId: requestId,
+  });
+  proxyResponse.once('response', ({ statusCode, statusMessage, headers, httpVersion }) => {
+    if (statusCode) {
+      // not upgrade event
+      socket.write(createSocketHttpHeader(`HTTP/${httpVersion} ${statusCode} ${statusMessage}`, headers));
+      proxyResponse.pipe(socket);
+      return;
+    }
+    socket.write(createSocketHttpHeader('HTTP/1.1 101 Switching Protocols', headers))
+    proxyResponse.pipe(socket).pipe(proxyResponse);
   });
 });
 

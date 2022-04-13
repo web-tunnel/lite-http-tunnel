@@ -1,5 +1,5 @@
 
-const { Writable, Readable } = require('stream');
+const { Writable, Duplex } = require('stream');
 
 class SocketRequest extends Writable {
   constructor({ socket, requestId, request }) {
@@ -42,7 +42,7 @@ class SocketRequest extends Writable {
   }
 }
 
-class SocketResponse extends Readable {
+class SocketResponse extends Duplex {
   constructor({ socket, responseId }) {
     super();
     this._socket = socket;
@@ -51,7 +51,12 @@ class SocketResponse extends Readable {
       if (this._responseId === responseId) {
         this._socket.off('response', onResponse);
         this._socket.off('request-error', onRequestError);
-        this.emit('response', data.statusCode, data.statusMessage, data.headers);
+        this.emit('response', {
+          statusCode: data.statusCode,
+          statusMessage: data.statusMessage,
+          headers: data.headers,
+          httpVersion: data.httpVersion,
+        });
       }
     }
     const onResponsePipe = (responseId, data) => {
@@ -109,6 +114,38 @@ class SocketResponse extends Readable {
   }
 
   _read(size) {}
+
+  _write(chunk, encoding, callback) {
+    this._socket.emit('response-pipe', this._responseId, chunk);
+    this._socket.conn.once('drain', () => {
+      callback();
+    });
+  }
+
+  _writev(chunks, callback) {
+    this._socket.emit('response-pipes', this._responseId, chunks);
+    this._socket.conn.once('drain', () => {
+      callback();
+    });
+  }
+
+  _final(callback) {
+    this._socket.emit('response-pipe-end', this._responseId);
+    this._socket.conn.once('drain', () => {
+      callback();
+    });
+  }
+
+  _destroy(e, callback) {
+    if (e) {
+      this._socket.emit('response-pipe-error', this._responseId, e && e.message);
+      this._socket.conn.once('drain', () => {
+        callback();
+      });
+      return;
+    }
+    callback();
+  }
 }
 
 exports.SocketRequest = SocketRequest;
