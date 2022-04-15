@@ -63,7 +63,7 @@ After that you can access your local HTTP server by access `your_public_server_d
 $ lite-http-tunnel start your_local_server_port -p profile1
 ```
 
-#### Change origin sent to local server:
+#### Change origin to local server:
 
 ```shell
 $ lite-http-tunnel start your_local_server_port -o localhost:5000
