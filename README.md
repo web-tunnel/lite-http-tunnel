@@ -1,9 +1,8 @@
 # Lite HTTP Tunnel
 
-A HTTP Tunnel tool to help you expose local HTTP server behind a NAT or firewall to the internet. Inspired by [Ngrok](https://github.com/inconshreveable/ngrok).
+A HTTP Tunnel tool to help you expose local HTTP server behind a NAT or firewall to the internet. Inspired by [Ngrok](https://github.com/inconshreveable/ngrok) and [node-http-proxy](https://github.com/http-party/node-http-proxy).
 
 ![http tunnel](https://user-images.githubusercontent.com/7036536/155876708-f30f4921-c8c8-463d-8917-c4f932d3b2e6.png)
-
 
 ## How it work
 

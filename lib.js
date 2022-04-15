@@ -1,7 +1,7 @@
 
 const { Writable, Duplex } = require('stream');
 
-class SocketRequest extends Writable {
+class TunnelRequest extends Writable {
   constructor({ socket, requestId, request }) {
     super();
     this._socket = socket;
@@ -42,7 +42,7 @@ class SocketRequest extends Writable {
   }
 }
 
-class SocketResponse extends Duplex {
+class TunnelResponse extends Duplex {
   constructor({ socket, responseId }) {
     super();
     this._socket = socket;
@@ -148,5 +148,5 @@ class SocketResponse extends Duplex {
   }
 }
 
-exports.SocketRequest = SocketRequest;
-exports.SocketResponse = SocketResponse;
+exports.TunnelRequest = TunnelRequest;
+exports.TunnelResponse = TunnelResponse;
