@@ -1,6 +1,6 @@
 {
   "name": "lite-http-tunnel-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "server.js",
   "engines": {
     "node": ">=14.0"
