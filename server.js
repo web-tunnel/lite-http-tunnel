@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 
-const { SocketRequest, SocketResponse } = require('./lib');
+const { TunnelRequest, TunnelResponse } = require('./lib');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -16,11 +16,11 @@ const io = new Server(httpServer, {
   path: webTunnelPath,
 });
 
-let connectedSockets = {};
+let tunnelSockets = {};
 
 io.use((socket, next) => {
   const connectHost = socket.handshake.headers.host;
-  if (connectedSockets[connectHost]) {
+  if (tunnelSockets[connectHost]) {
     return next(new Error(`${connectHost} has a existing connection`));
   }
   if (!socket.handshake.auth || !socket.handshake.auth.token){
@@ -39,7 +39,7 @@ io.use((socket, next) => {
 
 io.on('connection', (socket) => {
   const connectHost = socket.handshake.headers.host;
-  connectedSockets[connectHost] = socket;
+  tunnelSockets[connectHost] = socket;
   console.log(`client connected at ${connectHost}`);
   const onMessage = (message) => {
     if (message === 'ping') {
@@ -48,18 +48,11 @@ io.on('connection', (socket) => {
   }
   const onDisconnect = (reason) => {
     console.log('client disconnected: ', reason);
-    delete connectedSockets[connectHost];
+    delete tunnelSockets[connectHost];
     socket.off('message', onMessage);
-    socket.off('error', onError);
-  };
-  const onError = (e) => {
-    delete connectedSockets[connectHost];
-    socket.off('message', onMessage);
-    socket.off('disconnect', onDisconnect);
   };
   socket.on('message', onMessage);
   socket.once('disconnect', onDisconnect);
-  socket.once('error', onError);
 });
 
 app.use(morgan('tiny'));
@@ -83,15 +76,15 @@ app.get('/tunnel_jwt_generator', (req, res) => {
 });
 
 app.use('/', (req, res) => {
-  const connectedSocket = connectedSockets[req.headers.host];
-  if (!connectedSocket) {
+  const tunnelSocket = tunnelSockets[req.headers.host];
+  if (!tunnelSocket) {
     res.status(404);
     res.send('Not Found');
     return;
   }
   const requestId = uuidV4();
-  const proxyRequest = new SocketRequest({
-    socket: connectedSocket,
+  const tunnelRequest = new TunnelRequest({
+    socket: tunnelSocket,
     requestId,
     request: {
       method: req.method,
@@ -100,41 +93,41 @@ app.use('/', (req, res) => {
     },
   });
   const onReqError = (e) => {
-    proxyRequest.destroy(new Error(e || 'Aborted'));
+    tunnelRequest.destroy(new Error(e || 'Aborted'));
   }
   req.once('aborted', onReqError);
   req.once('error', onReqError);
-  req.pipe(proxyRequest);
+  req.pipe(tunnelRequest);
   req.once('finish', () => {
     req.off('aborted', onReqError);
     req.off('error', onReqError);
   });
-  const proxyResponse = new SocketResponse({
-    socket: connectedSocket,
+  const tunnelResponse = new TunnelResponse({
+    socket: tunnelSocket,
     responseId: requestId,
   });
   const onRequestError = () => {
-    proxyResponse.off('response', onResponse);
-    proxyResponse.destroy();
+    tunnelResponse.off('response', onResponse);
+    tunnelResponse.destroy();
     res.status(502);
     res.end('Request error');
   };
   const onResponse = ({ statusCode, statusMessage, headers }) => {
-    proxyRequest.off('requestError', onRequestError)
+    tunnelRequest.off('requestError', onRequestError)
     res.writeHead(statusCode, statusMessage, headers);
   };
-  proxyResponse.once('requestError', onRequestError)
-  proxyResponse.once('response', onResponse);
-  proxyResponse.pipe(res);
+  tunnelResponse.once('requestError', onRequestError)
+  tunnelResponse.once('response', onResponse);
+  tunnelResponse.pipe(res);
   const onSocketError = () => {
+    res.off('close', onResClose);
     res.end(500);
   };
-  proxyResponse.once('error', onSocketError);
-  connectedSocket.once('close', onSocketError)
-  res.once('close', () => {
-    connectedSocket.off('close', onSocketError);
-    proxyResponse.off('error', onSocketError);
-  });
+  const onResClose = () => {
+    tunnelSocket.off('disconnect', onSocketError);
+  };
+  tunnelSocket.once('disconnect', onSocketError)
+  res.once('close', onResClose);
 });
 
 function createSocketHttpHeader(line, headers) {
@@ -158,15 +151,16 @@ httpServer.on('upgrade', (req, socket, head) => {
   if (req.url.indexOf(webTunnelPath) === 0) {
     return;
   }
+  console.log(`WS ${req.url}`);
   // proxy websocket request
-  const connectedSocket = connectedSockets[req.headers.host];
-  if (!connectedSocket) {
+  const tunnelSocket = tunnelSockets[req.headers.host];
+  if (!tunnelSocket) {
     return;
   }
   if (head && head.length) socket.unshift(head);
   const requestId = uuidV4();
-  const proxyRequest = new SocketRequest({
-    socket: connectedSocket,
+  const tunnelRequest = new TunnelRequest({
+    socket: tunnelSocket,
     requestId,
     request: {
       method: req.method,
@@ -174,21 +168,54 @@ httpServer.on('upgrade', (req, socket, head) => {
       path: req.url,
     },
   });
-  req.pipe(proxyRequest);
-  const proxyResponse = new SocketResponse({
-    socket: connectedSocket,
+  req.pipe(tunnelRequest);
+  const tunnelResponse = new TunnelResponse({
+    socket: tunnelSocket,
     responseId: requestId,
   });
-  proxyResponse.once('response', ({ statusCode, statusMessage, headers, httpVersion }) => {
+  const onRequestError = () => {
+    tunnelResponse.off('response', onResponse);
+    tunnelResponse.destroy();
+    socket.end();
+  };
+  const onResponse = ({ statusCode, statusMessage, headers, httpVersion }) => {
+    tunnelResponse.off('requestError', onRequestError);
     if (statusCode) {
+      socket.once('error', (err) => {
+        console.log(`WS ${req.url} ERROR`);
+        // ignore error
+      });
       // not upgrade event
       socket.write(createSocketHttpHeader(`HTTP/${httpVersion} ${statusCode} ${statusMessage}`, headers));
-      proxyResponse.pipe(socket);
+      tunnelResponse.pipe(socket);
       return;
     }
-    socket.write(createSocketHttpHeader('HTTP/1.1 101 Switching Protocols', headers))
-    proxyResponse.pipe(socket).pipe(proxyResponse);
-  });
+    const onSocketError = (err) => {
+      console.log(`WS ${req.url} ERROR`);
+      socket.off('end', onSocketEnd);
+      tunnelSocket.off('disconnect', onTunnelError);
+      tunnelResponse.destroy(err);
+    };
+    const onSocketEnd = () => {
+      console.log(`WS ${req.url} END`);
+      socket.off('error', onSocketError);
+      tunnelSocket.off('disconnect', onTunnelError);
+      tunnelResponse.destroy();
+    };
+    const onTunnelError = () => {
+      socket.off('error', onSocketError);
+      socket.off('end', onSocketEnd);
+      socket.end();
+      tunnelResponse.destroy();
+    };
+    socket.once('error', onSocketError);
+    socket.once('end', onSocketEnd);
+    tunnelSocket.once('disconnect', onTunnelError);
+    socket.write(createSocketHttpHeader('HTTP/1.1 101 Switching Protocols', headers));
+    tunnelResponse.pipe(socket).pipe(tunnelResponse);
+  }
+  tunnelResponse.once('requestError', onRequestError)
+  tunnelResponse.once('response', onResponse);
 });
 
 httpServer.listen(process.env.PORT);
