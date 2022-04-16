@@ -28,6 +28,15 @@ You can also generate JWT Token in your local by following code [here](https://g
 
 ### Setup Client
 
+#### Install client
+
+Please install `lite-http-tunnel` client in your local computer where it can access your local HTTP server.
+
+```shell
+$ npm i -g lite-http-tunnel
+$ lite-http-tunnel -h
+```
+
 #### Config remote public server address:
 
 ```shell
