@@ -218,5 +218,5 @@ httpServer.on('upgrade', (req, socket, head) => {
   tunnelResponse.once('response', onResponse);
 });
 
-httpServer.listen(process.env.PORT);
-console.log(`app start at http://localhost:${process.env.PORT}`);
+httpServer.listen(process.env.PORT || 3000);
+console.log(`app start at http://localhost:${process.env.PORT || 3000}`);
