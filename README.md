@@ -1,6 +1,6 @@
 # Lite HTTP Tunnel
 
-A HTTP Tunnel tool to help you expose local HTTP/WebSocket server behind a NAT or firewall to the internet. Inspired by [Ngrok](https://github.com/inconshreveable/ngrok) and [node-http-proxy](https://github.com/http-party/node-http-proxy).
+A tunnel tool to help you expose local web (HTTP/WebSocket) server behind a NAT or firewall to the internet. Inspired by [Ngrok](https://github.com/inconshreveable/ngrok) and [node-http-proxy](https://github.com/http-party/node-http-proxy).
 
 ![http tunnel](https://user-images.githubusercontent.com/7036536/155876708-f30f4921-c8c8-463d-8917-c4f932d3b2e6.png)
 
@@ -12,9 +12,9 @@ The tunnel is based on `WebSocket`. We have a `WebSocket` connection between the
 
 ### Deploy at public server
 
-Firstly please deploy this project to your own web host with public internet access. The project is just a `Node.js` web server based on `Express.js`. So just just deploy as what you do for [deploying Node.js web server](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/deployment).
+Firstly please deploy this project to your own web host with public internet access. The project is just a `Node.js` web server based on `Express.js`. So just deploy as what you do for [deploying Node.js web server](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/deployment).
 
-It is recommended to deploy into Heroku with `Deploy To Heroku` button below:
+You can deploy with Heroku with `Deploy To Heroku` button below:
 
 [![Deploy To Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
@@ -86,7 +86,7 @@ $ lite-http-tunnel start your_local_server_port -h localhost1
 
 ## Multiple Clients
 
-The server steams HTTP request to WebSocket connection which has same host value in request headers.
+The server steams web request to WebSocket connection which has same host value in request headers.
 
 So if you have multiple domains for the proxy server, you can have multiple clients.
 
