@@ -2,6 +2,7 @@ services:
   - type: web
     name: lite_http_tunnel
     env: node
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
