@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: lite_http_tunnel
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: VERIFY_TOKEN
+        generateValue: true
+      - key: JWT_GENERATOR_USERNAME
+        sync: false
+      - key: JWT_GENERATOR_PASSWORD
+        sync: false
