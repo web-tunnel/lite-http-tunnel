@@ -22,11 +22,9 @@ Firstly please deploy this project to your own web host with public internet acc
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-#### Get JWT Token
+#### JWT Token generator environment variables
 
-In first deployment, you need to provide `JWT_GENERATOR_USERNAME` and `JWT_GENERATOR_PASSWORD` environment variables, then you can access `https://your_web_host_domain/tunnel_jwt_generator?username=your_generator_username&password=your_generator_password` to get `JWT Token`. After you get `JWT Token`, you can remove `JWT_GENERATOR_USERNAME` and `JWT_GENERATOR_PASSWORD` environment variables to remove `/tunnel_jwt_generator` access.
-
-You can also generate JWT Token in your local by following code [here](https://github.com/embbnux/lite-http-tunnel/blob/main/server.js#L71).
+In first deployment, you need to provide `JWT_GENERATOR_USERNAME` and `JWT_GENERATOR_PASSWORD` environment variables. We will use those values to auth and get JWT token at client side. After you get `JWT Token`, you can remove `JWT_GENERATOR_USERNAME` and `JWT_GENERATOR_PASSWORD` environment variables to keep safe.
 
 ### Setup Client
 
@@ -45,17 +43,19 @@ $ lite-http-tunnel -h
 $ lite-http-tunnel config server https://your_web_host_domain
 ```
 
-#### Config jwt token that you got from server:
+#### Auth with server:
 
 ```shell
-$ lite-http-tunnel config jwt your_jwt_token
+$ lite-http-tunnel auth $JWT_GENERATOR_USERNAME $JWT_GENERATOR_PASSWORD
 ```
+
+ > Replace `$JWT_GENERATOR_USERNAME` and `$JWT_GENERATOR_PASSWORD` with values that you provide at tunnel server
 
 #### Or With specified profile
 
 ```shell
 $ lite-http-tunnel config server https://your_web_host_domain -p profile1
-$ lite-http-tunnel config jwt your_jwt_token -p profile1
+$ lite-http-tunnel auth $JWT_GENERATOR_USERNAME $JWT_GENERATOR_PASSWORD -p profile1
 ```
 
 #### Start client
