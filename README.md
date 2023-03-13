@@ -112,7 +112,7 @@ $ lite-http-tunnel start your_local_server_port -p profile2
 
 ### Use path prefix
 
-From `0.2.0`, it supports to has multiple clients with different path prefix.
+From `0.2.0`, it supports to have multiple clients with different path prefix.
 
 In client 1:
 
