@@ -16,11 +16,57 @@ const io = new Server(httpServer, {
   path: webTunnelPath,
 });
 
-let tunnelSockets = {};
+let tunnelSockets = [];
+
+function getTunnelSocket(host, pathPrefix) {
+  return tunnelSockets.find((s) =>
+    s.host === host && s.pathPrefix === pathPrefix
+  );
+}
+
+function setTunnelSocket(host, pathPrefix, socket) {
+  tunnelSockets.push({
+    host,
+    pathPrefix,
+    socket,
+  });
+}
+
+function removeTunnelSocket(host, pathPrefix) {
+  tunnelSockets = tunnelSockets.filter((s) => 
+    !(s.host === host && s.pathPrefix === pathPrefix)
+  );
+  console.log('tunnelSockets: ', tunnelSockets);
+}
+
+function getAvailableTunnelSocket(host, url) {
+  const tunnels = tunnelSockets.filter((s) => {
+    if (s.host !== host) {
+      return false;
+    }
+    if (!s.pathPrefix) {
+      return true;
+    }
+    return url.indexOf(s.pathPrefix) === 0;
+  }).sort((a, b) => {
+    if (!a.pathPrefix) {
+      return 1;
+    }
+    if (!b.pathPrefix) {
+      return -1;
+    }
+    return b.pathPrefix.length - a.pathPrefix.length;
+  });
+  if (tunnels.length === 0) {
+    return null;
+  }
+  return tunnels[0].socket;
+}
 
 io.use((socket, next) => {
   const connectHost = socket.handshake.headers.host;
-  if (tunnelSockets[connectHost]) {
+  const pathPrefix = socket.handshake.headers['path-prefix'];
+  if (getTunnelSocket(connectHost, pathPrefix)) {
     return next(new Error(`${connectHost} has a existing connection`));
   }
   if (!socket.handshake.auth || !socket.handshake.auth.token){
@@ -39,8 +85,9 @@ io.use((socket, next) => {
 
 io.on('connection', (socket) => {
   const connectHost = socket.handshake.headers.host;
-  tunnelSockets[connectHost] = socket;
-  console.log(`client connected at ${connectHost}`);
+  const pathPrefix = socket.handshake.headers['path-prefix'];
+  setTunnelSocket(connectHost, pathPrefix, socket);
+  console.log(`client connected at ${connectHost}, path prefix: ${pathPrefix}`);
   const onMessage = (message) => {
     if (message === 'ping') {
       socket.send('pong');
@@ -48,7 +95,7 @@ io.on('connection', (socket) => {
   }
   const onDisconnect = (reason) => {
     console.log('client disconnected: ', reason);
-    delete tunnelSockets[connectHost];
+    removeTunnelSocket(connectHost, pathPrefix);
     socket.off('message', onMessage);
   };
   socket.on('message', onMessage);
@@ -94,7 +141,7 @@ function getReqHeaders(req) {
 }
 
 app.use('/', (req, res) => {
-  const tunnelSocket = tunnelSockets[req.headers.host];
+  const tunnelSocket = getAvailableTunnelSocket(req.headers.host, req.url);
   if (!tunnelSocket) {
     res.status(404);
     res.send('Not Found');
@@ -171,7 +218,7 @@ httpServer.on('upgrade', (req, socket, head) => {
   }
   console.log(`WS ${req.url}`);
   // proxy websocket request
-  const tunnelSocket = tunnelSockets[req.headers.host];
+  const tunnelSocket = getAvailableTunnelSocket(req.headers.host, req.url);
   if (!tunnelSocket) {
     return;
   }

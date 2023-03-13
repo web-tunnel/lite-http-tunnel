@@ -88,9 +88,11 @@ $ lite-http-tunnel start your_local_server_port -h localhost1
 
 ## Multiple Clients
 
+### Use different domains for public server
+
 The server steams web request to WebSocket connection which has same host value in request headers.
 
-So if you have multiple domains for the proxy server, you can have multiple clients.
+So if you have multiple domains for the proxy server, you can have multiple clients based on different domain.
 
 For example, you have `https://app1.test.com` and `https://app2.test.com` for this proxy server.
 
@@ -108,6 +110,26 @@ $ lite-http-tunnel config server https://app2.test.com -p profile2
 $ lite-http-tunnel start your_local_server_port -p profile2
 ```
 
+### Use path prefix
+
+From `0.2.0`, it supports to have multiple clients with different path prefix.
+
+In client 1:
+
+```
+$ lite-http-tunnel config path /api_v1
+$ lite-http-tunnel start your_local_server_port
+```
+
+In client 2:
+
+```
+$ lite-http-tunnel config path /api_v2
+$ lite-http-tunnel start your_local_server_port
+```
+
+With that, requests with path prefix `/api_v1` will be streamed to client 1, requests with path prefix `/api_v2` will be streamed to client 2
+
 ## Related
 
 A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https://medium.com/@embbnux/building-a-http-tunnel-with-websocket-and-node-js-98068b0225d3?source=friends_link&sk=985d90ec9f512928b34ed38b7ddcb378)
@@ -115,4 +137,3 @@ A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https:/
 ## TODO
 
 - [ ] Add tests
-- [ ] Support multiple clients based on request path prefix
