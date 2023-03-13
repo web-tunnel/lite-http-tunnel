@@ -137,4 +137,3 @@ A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https:/
 ## TODO
 
 - [ ] Add tests
-- [ ] Support multiple clients based on request path prefix
