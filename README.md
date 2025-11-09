@@ -29,8 +29,8 @@ This is a standard Node.js/Express server.
 	```
 
 - One‑click deploy
-	- Heroku: [![Deploy To Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
-	- Render: [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+	- Heroku: [![Deploy To Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/web-tunnel/lite-http-tunnel)
+	- Render: [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/web-tunnel/lite-http-tunnel)
 
 ### Required environment variables
 
