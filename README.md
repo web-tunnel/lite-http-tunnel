@@ -20,8 +20,10 @@ Key features:
 
 This is a standard Node.js/Express server.
 
-- Deploy on [your own server](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/deployment)
+- Deploy this project on [your own server](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/deployment)
 	```sh
+    git clone https://github.com/web-tunnel/lite-http-tunnel.git
+	cd lite-http-tunnel
 	npm install
 	npm start
 	```
@@ -61,9 +63,6 @@ Start the tunnel:
 ```sh
 # Basic
 lite-http-tunnel start <local_port>
-
-# With a specific profile
-lite-http-tunnel start <local_port> -p profile1
 
 # Override Host header (origin) for the local target
 lite-http-tunnel start <local_port> -o localhost:5000
