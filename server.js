@@ -8,6 +8,8 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const { TunnelRequest, TunnelResponse } = require('./lib');
+const { getTunnelSocket, setTunnelSocket, removeTunnelSocket, getAvailableTunnelSocket } = require('./utils/tunnels');
+const { getReqHeaders } = require('./utils/headers');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -16,52 +18,6 @@ const io = new Server(httpServer, {
   path: webTunnelPath,
 });
 
-let tunnelSockets = [];
-
-function getTunnelSocket(host, pathPrefix) {
-  return tunnelSockets.find((s) =>
-    s.host === host && s.pathPrefix === pathPrefix
-  );
-}
-
-function setTunnelSocket(host, pathPrefix, socket) {
-  tunnelSockets.push({
-    host,
-    pathPrefix,
-    socket,
-  });
-}
-
-function removeTunnelSocket(host, pathPrefix) {
-  tunnelSockets = tunnelSockets.filter((s) => 
-    !(s.host === host && s.pathPrefix === pathPrefix)
-  );
-  console.log('tunnelSockets: ', tunnelSockets);
-}
-
-function getAvailableTunnelSocket(host, url) {
-  const tunnels = tunnelSockets.filter((s) => {
-    if (s.host !== host) {
-      return false;
-    }
-    if (!s.pathPrefix) {
-      return true;
-    }
-    return url.indexOf(s.pathPrefix) === 0;
-  }).sort((a, b) => {
-    if (!a.pathPrefix) {
-      return 1;
-    }
-    if (!b.pathPrefix) {
-      return -1;
-    }
-    return b.pathPrefix.length - a.pathPrefix.length;
-  });
-  if (tunnels.length === 0) {
-    return null;
-  }
-  return tunnels[0].socket;
-}
 
 io.use((socket, next) => {
   const connectHost = socket.handshake.headers.host;
@@ -122,23 +78,7 @@ app.get('/tunnel_jwt_generator', (req, res) => {
   res.send('Forbidden');
 });
 
-function getReqHeaders(req) {
-  const encrypted = !!(req.isSpdy || req.connection.encrypted || req.connection.pair);
-  const headers = { ...req.headers };
-  const url = new URL(`${encrypted ? 'https' : 'http'}://${req.headers.host}`);
-  const forwardValues = {
-    for: req.connection.remoteAddress || req.socket.remoteAddress,
-    port: url.port || (encrypted ? 443 : 80),
-    proto: encrypted ? 'https' : 'http',
-  };
-  ['for', 'port', 'proto'].forEach((key) => {
-    const previousValue = req.headers[`x-forwarded-${key}`] || '';
-    headers[`x-forwarded-${key}`] =
-      `${previousValue || ''}${previousValue ? ',' : ''}${forwardValues[key]}`;
-  });
-  headers['x-forwarded-host'] = req.headers['x-forwarded-host'] || req.headers.host || '';
-  return headers;
-}
+// helpers moved to utils
 
 app.use('/', (req, res) => {
   const tunnelSocket = getAvailableTunnelSocket(req.headers.host, req.url);
@@ -283,5 +223,20 @@ httpServer.on('upgrade', (req, socket, head) => {
   tunnelResponse.once('response', onResponse);
 });
 
-httpServer.listen(process.env.PORT || 3000);
-console.log(`app start at http://localhost:${process.env.PORT || 3000}`);
+const PORT = process.env.PORT || 3000;
+if (require.main === module) {
+  httpServer.listen(PORT);
+  console.log(`app start at http://localhost:${PORT}`);
+}
+
+// Export helpers for testing and embedding
+module.exports = {
+  app,
+  httpServer,
+  io,
+  getAvailableTunnelSocket,
+  // Internal utilities exposed for tests
+  setTunnelSocket,
+  removeTunnelSocket,
+  getReqHeaders,
+};

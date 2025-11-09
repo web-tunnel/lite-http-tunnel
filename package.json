@@ -11,7 +11,8 @@
   },
   "license": "GPL-3.0",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest"
   },
   "dependencies": {
     "dotenv": "^16.0.0",
@@ -20,5 +21,12 @@
     "morgan": "^1.10.1",
     "socket.io": "^4.8.1",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.18.0",
+    "lite-http-tunnel": "^0.2.0"
   }
 }
