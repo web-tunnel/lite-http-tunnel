@@ -26,6 +26,7 @@
     "jest": "^29.7.0",
     "supertest": "^6.3.3",
     "socket.io-client": "^4.8.1",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "lite-http-tunnel": "^0.2.0"
   }
 }

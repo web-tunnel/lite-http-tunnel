@@ -3,7 +3,7 @@ const { io } = require('socket.io-client');
 const jwt = require('jsonwebtoken');
 
 const { httpServer } = require('../server');
-const { TunnelRequest, TunnelResponse } = require('../../proxy-client/lib');
+const { TunnelRequest, TunnelResponse } = require('lite-http-tunnel/lib');
 
 function ensureProxyListening() {
   return new Promise((resolve) => {

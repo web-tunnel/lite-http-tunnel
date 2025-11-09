@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 // Import server pieces
 const { httpServer } = require('../server');
 // Use the client-side tunnel classes for the simulated client
-const { TunnelRequest, TunnelResponse } = require('../../proxy-client/lib');
+const { TunnelRequest, TunnelResponse } = require('lite-http-tunnel/lib');
 
 // Helper to create a local target HTTP server
 function createLocalTarget(handler) {
