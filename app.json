@@ -1,7 +1,7 @@
 {
   "name": "Lite HTTP Tunnel Server",
   "description": "A lite http tunnel server to expose a local server behind a NAT or firewall to the internet",
-  "repository": "https://github.com/embbnux/lite-http-tunnel",
+  "repository": "https://github.com/web-tunnel/lite-http-tunnel",
   "keywords": ["node", "http-tunnel", "tunnel"],
   "env": {
     "NODE_ENV": {
