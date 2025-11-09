@@ -133,7 +133,3 @@ With that, requests with path prefix `/api_v1` will be streamed to client 1, req
 ## Related
 
 A introduce article: [Building a HTTP Tunnel with WebSocket and Node.JS](https://medium.com/@embbnux/building-a-http-tunnel-with-websocket-and-node-js-98068b0225d3?source=friends_link&sk=985d90ec9f512928b34ed38b7ddcb378)
-
-## TODO
-
-- [ ] Add tests
