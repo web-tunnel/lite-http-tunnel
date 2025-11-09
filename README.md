@@ -20,7 +20,7 @@ Key features:
 
 This is a standard Node.js/Express server.
 
-- Run locally
+- Deploy on [your own server](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/deployment)
 	```sh
 	npm install
 	npm start
