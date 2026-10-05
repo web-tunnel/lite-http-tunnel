@@ -1,5 +1,7 @@
 # Lite HTTP Tunnel (Server)
 
+[![Deploy to Railyard](https://app.railyard.run/deploy/badge)](https://app.railyard.run/deploy?repo=https://github.com/web-tunnel/lite-http-tunnel)
+
 Expose any local HTTP or WebSocket service to the internet through a lightweight tunnel. The server multiplexes inbound traffic and streams it to connected clients over a persistent WebSocket. Inspired by [Ngrok](https://github.com/inconshreveable/ngrok) and [node-http-proxy](https://github.com/http-party/node-http-proxy).
 
 ![http tunnel](https://user-images.githubusercontent.com/7036536/155876708-f30f4921-c8c8-463d-8917-c4f932d3b2e6.png)
